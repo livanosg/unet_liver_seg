@@ -3,7 +3,7 @@ import argparse
 PARSER = argparse.ArgumentParser(description='Train a model according to given hyperparameters.')
 
 # Mode
-PARSER.add_argument('-M', '--mode', type=str, default='pred',
+PARSER.add_argument('-M', '--mode', type=str, default='train',
                     choices=['train', 'test', 'chaos-test', 'pred'], help='Define mode')
 # Model options
 PARSER.add_argument('-load', '--load_model', type=str, default='', help=' If declared, the model saved will be loaded.')
