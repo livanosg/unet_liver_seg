@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.compat.v1.logging import info
 from tensorflow.estimator.experimental import stop_if_no_decrease_hook
-import data_handling
+import data_setup
 from dataset_handling import DatasetHandler
 from model_fn import unet_model_fn
 from config import paths

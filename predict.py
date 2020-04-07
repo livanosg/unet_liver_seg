@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 import config
-import data_handling
+import data_setup
 import model_fn
 
 
@@ -19,7 +19,7 @@ class PredictModes:
                                            params=self.model_fn_params)
 
     def run_chaos_test(self):
-        pred_input_fn = data_handling.DatasetHandler('chaos-test', self.args)
+        pred_input_fn = data_setup.DatasetHandler('chaos-test', self.args)
         predicted = self.ynet.predict(input_fn=lambda: pred_input_fn.input_fn(),
                                       predict_keys=['output_img', 'path'],
                                       yield_single_examples=True)
@@ -42,7 +42,7 @@ class PredictModes:
             cv2.imwrite(new_path, results)
 
     def predict(self):
-        pred_input_fn = data_handling.DatasetHandler('predict', self.args)
+        pred_input_fn = data_setup.DatasetHandler('predict', self.args)
         predicted = self.ynet.predict(input_fn=lambda: pred_input_fn.input_fn(),
                                       predict_keys=['output_img', 'path'],
                                       yield_single_examples=True)
