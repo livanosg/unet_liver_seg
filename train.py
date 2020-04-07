@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.compat.v1.logging import info
 from tensorflow.estimator.experimental import stop_if_no_decrease_hook
 import data_handling
+from dataset_handling import DatasetHandler
 from model_fn import unet_model_fn
 from config import paths
 from logs_script import save_logs
@@ -28,8 +29,8 @@ def train(args):
         model_path = paths['save'] + '/{}_trial_{}'.format(args.modality, trial)
         eval_path = model_path + '/eval'
 
-    train_input_fn = data_handling.DatasetHandler('train', args)
-    eval_input_fn = data_handling.DatasetHandler('eval', args)
+    train_input_fn = DatasetHandler('train', args)
+    eval_input_fn = DatasetHandler('eval', args)
 
     train_size = len(train_input_fn)
     eval_size = len(eval_input_fn)

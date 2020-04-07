@@ -147,4 +147,4 @@ class DataHandler:
 
 if __name__ == '__main__':
     a = DataHandler()
-    a.set_eval()
+    a.setup_datasets()
