@@ -1,6 +1,6 @@
 from os import makedirs
 from tensorflow.version import VERSION
-from config import root_dir
+from config import ROOT_DIR
 
 
 def save_logs(args, log_data):
@@ -9,7 +9,7 @@ def save_logs(args, log_data):
             'TensorFlow Version: {}'.format(VERSION),
             'Mode: {}'.format(args.mode),
             120 * '#',
-            'Working Directory: {}'.format(root_dir),
+            'Working Directory: {}'.format(ROOT_DIR),
             'Model Options',
             120 * '#',
             'You have chosen {} data'.format(args.modality),

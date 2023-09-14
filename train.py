@@ -3,15 +3,14 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.compat.v1.logging import info
 from tensorflow.estimator.experimental import stop_if_no_decrease_hook
-import data_setup
 from dataset_handling import DatasetHandler
 from model_fn import unet_model_fn
-from config import paths
+from config import SAVE_DIR
 from logs_script import save_logs
 
 
 def train(args):
-    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
+    # tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
     # Distribution Strategy
     os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
     # TODO Implement on multi-nodes SLURM
@@ -20,14 +19,14 @@ def train(args):
     session_config.gpu_options.allow_growth = True  # Allow full memory usage of GPU.
     warm_start = None
     if args.load_model:  # Load model
-        model_path = paths['save'] + '/' + args.load_model
-        eval_path = model_path + '/eval'
+        model_path = os.path.join(SAVE_DIR, args.load_model)
+        eval_path = os.path.join(model_path, 'eval')
     else:
         trial = 0
-        while os.path.exists(paths['save'] + '/{}_trial_{}'.format(args.modality, trial)):
+        while os.path.exists(os.path.join(SAVE_DIR, '{}_trial_{}'.format(args.modality, trial))):
             trial += 1
-        model_path = paths['save'] + '/{}_trial_{}'.format(args.modality, trial)
-        eval_path = model_path + '/eval'
+        model_path = os.path.join(SAVE_DIR, '{}_trial_{}'.format(args.modality, trial))
+        eval_path = os.path.join(model_path, 'eval')
 
     train_input_fn = DatasetHandler('train', args)
     eval_input_fn = DatasetHandler('eval', args)
@@ -46,7 +45,7 @@ def train(args):
 
     configuration = tf.estimator.RunConfig(tf_random_seed=args.seed,
                                            save_summary_steps=steps_per_epoch,
-                                           keep_checkpoint_max=args.early_stop + 2,
+                                           keep_checkpoint_max= 2,
                                            save_checkpoints_steps=steps_per_epoch,
                                            log_step_count_steps=np.ceil(steps_per_epoch / 2),
                                            train_distribute=strategy,

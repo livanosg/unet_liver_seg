@@ -1,10 +1,11 @@
+import os
 import argparse
 
 PARSER = argparse.ArgumentParser(description='Train a model according to given hyperparameters.')
 
 # Mode
 PARSER.add_argument('-M', '--mode', type=str, default='train',
-                    choices=['train', 'test', 'chaos-test', 'pred'], help='Define mode')
+                    choices=['train', 'test', 'pred'], help='Define mode')
 # Model options
 PARSER.add_argument('-load', '--load_model', type=str, default='', help=' If declared, the model saved will be loaded.')
 PARSER.add_argument('-no_bn', action='store_false', default=True, help='Batch Normalization.')
@@ -22,9 +23,9 @@ PARSER.add_argument('-modal', '--modality', type=str, default='MR',
 PARSER.add_argument('-aug', '--augm_set', type=str, default='all',
                     choices=['geom', 'dist', 'all', 'none'], help='Define the augmentation type')
 PARSER.add_argument('-augp', '--augm_prob', type=float, default=0.5, help='Probability for augmented image.')
-PARSER.add_argument('-batch', '--batch_size', type=int, default=2, help='Mini-batch size.')
+PARSER.add_argument('-batch', '--batch_size', type=int, default=64, help='Mini-batch size.')
 
-# Training hyper-parameters
+# Training hyperparameters
 PARSER.add_argument('-e', '--epochs', type=int, default=100, help='Training epochs.')
 PARSER.add_argument('-es', '--early_stop', type=int, default=20, help='Epochs without minimizing target.')
 # Estimator configuration
@@ -33,6 +34,7 @@ ARGS = PARSER.parse_args()
 
 
 if __name__ == '__main__':
+    os.environ["TF_XLA_FLAGS"] = "--tf_xla_cpu_global_jit"
     import train
     from predict import PredictModes
     if ARGS.mode in ('train', 'test'):

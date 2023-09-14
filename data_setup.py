@@ -2,72 +2,70 @@ import os
 import random
 import zipfile
 from glob import glob
-from shutil import rmtree
-import numpy as np
-from cv2.cv2 import imwrite
-from pydicom import dcmread
-from config import paths, dataset_root
+import shutil
+from config import TRAIN_DIR, EVAL_DIR, CHAOS_TRAIN_ZIP, CHAOS_TEST_ZIP, TEST_DIR, DATA_DIR
 
 
-class DataHandler:
-    """Handle CHAOS dataset from zip files placed in 'Dataset' folder."""
-
-    def __init__(self):
-        self.setup_paths = {'chaos_train': paths['train'] + '/CHAOS',
-                            'chaos_eval': paths['eval'] + '/CHAOS',
-                            'chaos_train_zip': dataset_root + '/CHAOS_Train_Sets.zip',
-                            'chaos_test_zip': dataset_root + '/CHAOS_Test_Sets.zip'}
-
-    def unzip_chaos(self):
-        """Unzip CHAOS train and test dataset."""
-
-        zip_paths = [self.setup_paths['chaos_train_zip'], self.setup_paths['chaos_test_zip']]
-        for zip_path in zip_paths:
-            print('Extracting {} ...'.format(zip_path))
+def unzip_chaos():
+    """Unzip CHAOS train and test dataset."""
+    for zip_path, dataset in [(CHAOS_TRAIN_ZIP, TRAIN_DIR), (CHAOS_TEST_ZIP, TEST_DIR)]:
+        print('Extracting {} ...'.format(zip_path))
+        if len(os.listdir(dataset)) == 0:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(dataset_root)
+                zip_ref.extractall(path=DATA_DIR)
             print('Done!')
-        os.replace(dataset_root + '/Train_Sets', self.setup_paths['chaos_train'])
+        else:
+            print("{} is not empty!".format(dataset))
 
-        
-    def set_eval(self):
-        """Setup evaluation data-set. 2 random patients are chosen from CHAOS dataset."""
-        for modality in ['/CT', '/MR']:
-            print(modality[1:].center(10, ' ').center(100, '*'))
-            for eval_sets in [self.setup_paths['chaos_eval']]:
-                if os.path.exists(eval_sets + modality):
-                    print('Removing patients from {} folder'.format(eval_sets[1:]).center(100, '-'))
-                    eval_set = glob(eval_sets + modality + '/**')
-                    for eval_patient in eval_set:
-                        print('Moving: {}'.format(eval_patient).center(60, ' ').center(100, '|'))
-                        print('to: {}'.format(eval_patient.replace('Eval', 'Train')).center(60, ' ').center(100, '|'))
-                        os.makedirs(os.path.dirname(eval_patient.replace('Eval', 'Train')), exist_ok=True)
-                        os.replace(eval_patient, eval_patient.replace('Eval', 'Train'))
 
-            for train_set in [self.setup_paths['chaos_train']]:
-                print('Moving patients from {} folder'.format(train_set.split('/')[-1]).center(100, '-'))
-                patient_list = glob(train_set + modality + '/**')
-                if patient_list:
-                    eval_patients = random.sample(patient_list, k=2)
-                    for patient in eval_patients:
-                        print('Moving: {}'.format(patient).center(60, ' ').center(100, '|'))
-                        print('to: {}'.format(patient.replace('Train', 'Eval')).center(60, ' ').center(100, '|'))
-                        os.makedirs(os.path.dirname(patient.replace('Train', 'Eval')), exist_ok=True)
-                        os.replace(patient, patient.replace('Train', 'Eval'))
+def set_eval():
+    """Setup evaluation data-set. 2 random patients are chosen from CHAOS dataset."""
 
-    def setup_datasets(self):
-        os.makedirs(paths['train'], exist_ok=True)
-        os.makedirs(paths['eval'], exist_ok=True)
-        self.unzip_chaos()
-        self.set_eval()
+    def move(from_: str, to_, samples: int = None):
+        """ Move patient samples from from_ to to_. If N samples provided, N samples will be moved."""
+        if samples:
+            patients = random.sample(glob(os.path.join(from_, '**')), k=samples)
+        else:
+            patients = glob(os.path.join(from_, '**'))
+        for patient in patients:
+            patient_to_ = patient.replace(from_, to_)
+            print('Moving: {} patient from {} to {}'.format(os.path.basename(patient),
+                                                            patient.split("/")[-3],
+                                                            patient_to_.split("/")[-3]))
+            if not os.path.exists(patient_to_):
+                os.makedirs(os.path.dirname(patient_to_), exist_ok=True)
+                os.rename(patient, patient_to_)
+            else:
+                print("Patient {} already in {}!!!".format(os.path.basename(patient_to_),
+                                                           os.path.dirname(patient_to_)))
 
-    def reset_datasets(self):
-        rmtree(paths['eval'])
-        rmtree(paths['train'])
-        rmtree(paths['chaos-test'])
-        self.setup_datasets()
+    for modality in ['CT', 'MR']:
+        train_mod_dir = os.path.join(TRAIN_DIR, modality)
+        eval_mod_dir = os.path.join(EVAL_DIR, modality)
+        print(modality.center(6, ' ').center(47, '*'))
+        if os.path.exists(eval_mod_dir):
+            # Move patients from evaluation to train for resampling.
+            move(from_=eval_mod_dir, to_=train_mod_dir)
+
+        if os.path.exists(train_mod_dir):
+            # Move patients from train to evaluation after sampling N samples.
+            move(from_=train_mod_dir, to_=eval_mod_dir, samples=2)
+
+
+def setup_datasets():
+    os.makedirs(TRAIN_DIR, exist_ok=True)
+    os.makedirs(EVAL_DIR, exist_ok=True)
+    os.makedirs(TEST_DIR, exist_ok=True)
+    unzip_chaos()
+    set_eval()
+
+
+def reset_datasets(self):
+    shutil.rmtree(EVAL_DIR)
+    shutil.rmtree(TRAIN_DIR)
+    shutil.rmtree(TEST_DIR)
+    self.setup_datasets()
 
 
 if __name__ == '__main__':
-    a = DataHandler()
-    a.setup_datasets()
+    setup_datasets()

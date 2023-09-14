@@ -24,7 +24,7 @@ def unet_model_fn(features, labels, mode, params):
             loss = loss.custom_loss()
 
         with tf.name_scope('Dice_Score_Calculation'):
-            dice = f1(labels=labels['label'], predictions=y_pred)
+            dice = f1(predictions=y_pred, labels=labels['label'])
 
         with tf.name_scope('Images_{}'.format(mode)):
             with tf.name_scope('Reformat_Outputs'):
